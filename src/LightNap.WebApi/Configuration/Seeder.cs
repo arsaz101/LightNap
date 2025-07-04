@@ -165,11 +165,16 @@ namespace LightNap.WebApi.Configuration
         /// seed any content required to be loaded regardless of environment.
         /// </summary>
         /// <returns>A task representing the asynchronous operation.</returns>
-        private Task SeedApplicationContentAsync()
+        private async Task SeedApplicationContentAsync()
         {
             // TODO: Add any seeding code you want run every time the app loads in any environment. For environment-specific seeding, see SeedEnvironmentContent().
 
-            return Task.CompletedTask;
+            // Seed sample articles
+            var articleService = _serviceProvider.GetService<LightNap.Core.Articles.Interfaces.IArticleService>();
+            if (articleService != null)
+            {
+                await ArticleSeeder.SeedArticlesAsync(articleService);
+            }
         }
 
         /// <summary>

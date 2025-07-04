@@ -23,6 +23,11 @@ namespace LightNap.Core.Data
         public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
 
         /// <summary>
+        /// Articles in the DB.
+        /// </summary>
+        public DbSet<Article> Articles { get; set; } = null!;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="ApplicationDbContext"/> class.
         /// </summary>
         /// <param name="options">The DbContext options.</param>
