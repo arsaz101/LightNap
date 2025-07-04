@@ -1,17 +1,11 @@
-import { inject, Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { API_URL_ROOT, ApiResponse } from '@core';
-import { 
-  Article, 
-  CreateArticleRequest, 
-  UpdateArticleRequest, 
-  GetArticlesRequest, 
-  GetArticlesResponse 
-} from '../models/article.model';
+import { inject, Injectable } from "@angular/core";
+import { HttpClient, HttpParams } from "@angular/common/http";
+import { Observable } from "rxjs";
+import { API_URL_ROOT, ApiResponse } from "@core";
+import { Article, CreateArticleRequest, UpdateArticleRequest, GetArticlesRequest, GetArticlesResponse } from "../models/article.model";
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: "root",
 })
 export class ArticlesService {
   #http = inject(HttpClient);
@@ -19,30 +13,34 @@ export class ArticlesService {
 
   getArticles(request: GetArticlesRequest): Observable<ApiResponse<GetArticlesResponse>> {
     let params = new HttpParams();
-    
+
     if (request.articleCategory) {
-      params = params.set('articleCategory', request.articleCategory);
+      params = params.set("articleCategory", request.articleCategory);
     }
     if (request.bicycleCategory) {
-      params = params.set('bicycleCategory', request.bicycleCategory);
+      if (Array.isArray(request.bicycleCategory) && request.bicycleCategory.length > 0) {
+        params = params.set("bicycleCategory", request.bicycleCategory.join(","));
+      } else if (typeof request.bicycleCategory === "string" && request.bicycleCategory) {
+        params = params.set("bicycleCategory", request.bicycleCategory);
+      }
     }
     if (request.material) {
-      params = params.set('material', request.material);
+      params = params.set("material", request.material);
     }
     if (request.searchTerm) {
-      params = params.set('searchTerm', request.searchTerm);
+      params = params.set("searchTerm", request.searchTerm);
     }
     if (request.sortBy) {
-      params = params.set('sortBy', request.sortBy);
+      params = params.set("sortBy", request.sortBy);
     }
     if (request.sortDirection) {
-      params = params.set('sortDirection', request.sortDirection);
+      params = params.set("sortDirection", request.sortDirection);
     }
     if (request.page) {
-      params = params.set('page', request.page.toString());
+      params = params.set("page", request.page.toString());
     }
     if (request.pageSize) {
-      params = params.set('pageSize', request.pageSize.toString());
+      params = params.set("pageSize", request.pageSize.toString());
     }
 
     return this.#http.get<ApiResponse<GetArticlesResponse>>(this.#apiUrlRoot, { params });
@@ -75,4 +73,4 @@ export class ArticlesService {
   getMaterials(): Observable<ApiResponse<string[]>> {
     return this.#http.get<ApiResponse<string[]>>(`${this.#apiUrlRoot}materials`);
   }
-} 
+}

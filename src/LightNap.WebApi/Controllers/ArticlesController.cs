@@ -1,5 +1,6 @@
 using LightNap.Core.Api;
 using LightNap.Core.Articles.Dto.Request;
+using LightNap.Core.Articles.Dto.Response;
 using LightNap.Core.Articles.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -32,11 +33,19 @@ namespace LightNap.WebApi.Controllers
             try
             {
                 var response = await _articleService.GetArticlesAsync(request);
-                return Ok(ApiResponseDto<GetArticlesResponse>.Success(response));
+                return Ok(new ApiResponseDto<GetArticlesResponse>
+                {
+                    Result = response,
+                    Type = ApiResponseType.Success
+                });
             }
             catch (Exception ex)
             {
-                return BadRequest(ApiResponseDto<GetArticlesResponse>.Error($"Failed to get articles: {ex.Message}"));
+                return BadRequest(new ApiResponseDto<GetArticlesResponse>
+                {
+                    Type = ApiResponseType.Error,
+                    ErrorMessages = new[] { $"Failed to get articles: {ex.Message}" }
+                });
             }
         }
 
@@ -53,14 +62,26 @@ namespace LightNap.WebApi.Controllers
                 var article = await _articleService.GetArticleByIdAsync(id);
                 if (article == null)
                 {
-                    return NotFound(ApiResponseDto<ArticleDto>.Error("Article not found"));
+                    return NotFound(new ApiResponseDto<ArticleDto>
+                    {
+                        Type = ApiResponseType.Error,
+                        ErrorMessages = new[] { "Article not found" }
+                    });
                 }
 
-                return Ok(ApiResponseDto<ArticleDto>.Success(article));
+                return Ok(new ApiResponseDto<ArticleDto>
+                {
+                    Result = article,
+                    Type = ApiResponseType.Success
+                });
             }
             catch (Exception ex)
             {
-                return BadRequest(ApiResponseDto<ArticleDto>.Error($"Failed to get article: {ex.Message}"));
+                return BadRequest(new ApiResponseDto<ArticleDto>
+                {
+                    Type = ApiResponseType.Error,
+                    ErrorMessages = new[] { $"Failed to get article: {ex.Message}" }
+                });
             }
         }
 
@@ -75,12 +96,20 @@ namespace LightNap.WebApi.Controllers
             try
             {
                 var article = await _articleService.CreateArticleAsync(request);
-                return CreatedAtAction(nameof(GetArticle), new { id = article.Id }, 
-                    ApiResponseDto<ArticleDto>.Success(article));
+                return CreatedAtAction(nameof(GetArticle), new { id = article.Id },
+                    new ApiResponseDto<ArticleDto>
+                    {
+                        Result = article,
+                        Type = ApiResponseType.Success
+                    });
             }
             catch (Exception ex)
             {
-                return BadRequest(ApiResponseDto<ArticleDto>.Error($"Failed to create article: {ex.Message}"));
+                return BadRequest(new ApiResponseDto<ArticleDto>
+                {
+                    Type = ApiResponseType.Error,
+                    ErrorMessages = new[] { $"Failed to create article: {ex.Message}" }
+                });
             }
         }
 
@@ -96,15 +125,27 @@ namespace LightNap.WebApi.Controllers
             try
             {
                 var article = await _articleService.UpdateArticleAsync(id, request);
-                return Ok(ApiResponseDto<ArticleDto>.Success(article));
+                return Ok(new ApiResponseDto<ArticleDto>
+                {
+                    Result = article,
+                    Type = ApiResponseType.Success
+                });
             }
             catch (ArgumentException ex)
             {
-                return NotFound(ApiResponseDto<ArticleDto>.Error(ex.Message));
+                return NotFound(new ApiResponseDto<ArticleDto>
+                {
+                    Type = ApiResponseType.Error,
+                    ErrorMessages = new[] { ex.Message }
+                });
             }
             catch (Exception ex)
             {
-                return BadRequest(ApiResponseDto<ArticleDto>.Error($"Failed to update article: {ex.Message}"));
+                return BadRequest(new ApiResponseDto<ArticleDto>
+                {
+                    Type = ApiResponseType.Error,
+                    ErrorMessages = new[] { $"Failed to update article: {ex.Message}" }
+                });
             }
         }
 
@@ -121,14 +162,26 @@ namespace LightNap.WebApi.Controllers
                 var deleted = await _articleService.DeleteArticleAsync(id);
                 if (!deleted)
                 {
-                    return NotFound(ApiResponseDto<bool>.Error("Article not found"));
+                    return NotFound(new ApiResponseDto<bool>
+                    {
+                        Type = ApiResponseType.Error,
+                        ErrorMessages = new[] { "Article not found" }
+                    });
                 }
 
-                return Ok(ApiResponseDto<bool>.Success(true));
+                return Ok(new ApiResponseDto<bool>
+                {
+                    Result = true,
+                    Type = ApiResponseType.Success
+                });
             }
             catch (Exception ex)
             {
-                return BadRequest(ApiResponseDto<bool>.Error($"Failed to delete article: {ex.Message}"));
+                return BadRequest(new ApiResponseDto<bool>
+                {
+                    Type = ApiResponseType.Error,
+                    ErrorMessages = new[] { $"Failed to delete article: {ex.Message}" }
+                });
             }
         }
 
@@ -142,11 +195,19 @@ namespace LightNap.WebApi.Controllers
             try
             {
                 var categories = await _articleService.GetArticleCategoriesAsync();
-                return Ok(ApiResponseDto<List<string>>.Success(categories));
+                return Ok(new ApiResponseDto<List<string>>
+                {
+                    Result = categories,
+                    Type = ApiResponseType.Success
+                });
             }
             catch (Exception ex)
             {
-                return BadRequest(ApiResponseDto<List<string>>.Error($"Failed to get article categories: {ex.Message}"));
+                return BadRequest(new ApiResponseDto<List<string>>
+                {
+                    Type = ApiResponseType.Error,
+                    ErrorMessages = new[] { $"Failed to get article categories: {ex.Message}" }
+                });
             }
         }
 
@@ -160,11 +221,19 @@ namespace LightNap.WebApi.Controllers
             try
             {
                 var categories = await _articleService.GetBicycleCategoriesAsync();
-                return Ok(ApiResponseDto<List<string>>.Success(categories));
+                return Ok(new ApiResponseDto<List<string>>
+                {
+                    Result = categories,
+                    Type = ApiResponseType.Success
+                });
             }
             catch (Exception ex)
             {
-                return BadRequest(ApiResponseDto<List<string>>.Error($"Failed to get bicycle categories: {ex.Message}"));
+                return BadRequest(new ApiResponseDto<List<string>>
+                {
+                    Type = ApiResponseType.Error,
+                    ErrorMessages = new[] { $"Failed to get bicycle categories: {ex.Message}" }
+                });
             }
         }
 
@@ -178,11 +247,19 @@ namespace LightNap.WebApi.Controllers
             try
             {
                 var materials = await _articleService.GetMaterialsAsync();
-                return Ok(ApiResponseDto<List<string>>.Success(materials));
+                return Ok(new ApiResponseDto<List<string>>
+                {
+                    Result = materials,
+                    Type = ApiResponseType.Success
+                });
             }
             catch (Exception ex)
             {
-                return BadRequest(ApiResponseDto<List<string>>.Error($"Failed to get materials: {ex.Message}"));
+                return BadRequest(new ApiResponseDto<List<string>>
+                {
+                    Type = ApiResponseType.Error,
+                    ErrorMessages = new[] { $"Failed to get materials: {ex.Message}" }
+                });
             }
         }
     }

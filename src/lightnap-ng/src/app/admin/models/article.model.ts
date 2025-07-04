@@ -3,7 +3,7 @@ export interface Article {
   articleNumber: string;
   name: string;
   articleCategory: string;
-  bicycleCategory: string;
+  bicycleCategories: string[];
   material: string;
   lengthMm?: number;
   widthMm?: number;
@@ -17,7 +17,7 @@ export interface CreateArticleRequest {
   articleNumber: string;
   name: string;
   articleCategory: string;
-  bicycleCategory: string;
+  bicycleCategories: string[];
   material: string;
   lengthMm?: number;
   widthMm?: number;
@@ -29,7 +29,7 @@ export interface UpdateArticleRequest extends CreateArticleRequest {}
 
 export interface GetArticlesRequest {
   articleCategory?: string;
-  bicycleCategory?: string;
+  bicycleCategory?: string | string[];
   material?: string;
   searchTerm?: string;
   sortBy?: string;
@@ -46,4 +46,4 @@ export interface GetArticlesResponse {
   totalPages: number;
   hasNextPage: boolean;
   hasPreviousPage: boolean;
-} 
+}

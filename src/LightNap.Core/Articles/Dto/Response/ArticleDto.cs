@@ -26,9 +26,9 @@ namespace LightNap.Core.Articles.Dto.Response
         public string ArticleCategory { get; set; } = string.Empty;
 
         /// <summary>
-        /// The bicycle category this article is compatible with (e.g., Road, Mountain, etc.).
+        /// The bicycle categories this article is compatible with (e.g., Road, Mountain, etc.).
         /// </summary>
-        public string BicycleCategory { get; set; } = string.Empty;
+        public List<string> BicycleCategories { get; set; } = new();
 
         /// <summary>
         /// The material used in the article.

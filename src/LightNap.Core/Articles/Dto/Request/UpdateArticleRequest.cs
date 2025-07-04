@@ -29,11 +29,11 @@ namespace LightNap.Core.Articles.Dto.Request
         public string ArticleCategory { get; set; } = string.Empty;
 
         /// <summary>
-        /// The bicycle category this article is compatible with (e.g., Road, Mountain, etc.).
+        /// The bicycle categories this article is compatible with (e.g., Road, Mountain, etc.).
         /// </summary>
         [Required]
-        [MaxLength(100)]
-        public string BicycleCategory { get; set; } = string.Empty;
+        [MinLength(1)]
+        public List<string> BicycleCategories { get; set; } = new();
 
         /// <summary>
         /// The material used in the article.

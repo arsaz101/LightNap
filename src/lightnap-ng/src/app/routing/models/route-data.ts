@@ -14,4 +14,9 @@ export interface RouteData {
      * An optional breadcrumb label for the route.
      */
     breadcrumb?: string;
+
+    /**
+     * An optional title for the route (used in page titles, etc).
+     */
+    title?: string;
 }

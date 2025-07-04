@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace LightNap.Core.Data.Entities
 {
@@ -34,11 +35,21 @@ namespace LightNap.Core.Data.Entities
         public string ArticleCategory { get; set; } = string.Empty;
 
         /// <summary>
-        /// The bicycle category this article is compatible with (e.g., Road, Mountain, etc.).
+        /// The bicycle categories this article is compatible with (e.g., Road, Mountain, etc.).
         /// </summary>
         [Required]
-        [MaxLength(100)]
-        public string BicycleCategory { get; set; } = string.Empty;
+        [MaxLength(300)]
+        public string BicycleCategories { get; set; } = string.Empty;
+
+        /// <summary>
+        /// The bicycle categories as a list.
+        /// </summary>
+        [NotMapped]
+        public List<string> BicycleCategoryList
+        {
+            get => BicycleCategories?.Split(',', System.StringSplitOptions.RemoveEmptyEntries | System.StringSplitOptions.TrimEntries).ToList() ?? new List<string>();
+            set => BicycleCategories = value != null ? string.Join(",", value) : string.Empty;
+        }
 
         /// <summary>
         /// The material used in the article.

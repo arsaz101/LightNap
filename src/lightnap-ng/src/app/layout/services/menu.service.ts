@@ -36,6 +36,7 @@ export class MenuService {
       { label: "Home", icon: "pi pi-fw pi-home", routerLink: this.#routeAlias.getRoute("admin-home") },
       { label: "Users", icon: "pi pi-fw pi-users", routerLink: this.#routeAlias.getRoute("admin-users") },
       { label: "Roles", icon: "pi pi-fw pi-lock", routerLink: this.#routeAlias.getRoute("admin-roles") },
+      { label: "Articles", icon: "pi pi-fw pi-list", routerLink: this.#routeAlias.getRoute("admin-articles") },
     ],
   });
 
@@ -46,8 +47,8 @@ export class MenuService {
 
   constructor() {
     combineLatest([
-      this.#identityService.watchLoggedIn$().pipe(tap(isLoggedIn => (this.#isLoggedIn = isLoggedIn))),
-      this.#identityService.watchUserRole$("Administrator").pipe(tap(isAdminLoggedIn => (this.#isAdminLoggedIn = isAdminLoggedIn))),
+      this.#identityService.watchLoggedIn$().pipe(tap(isLoggedIn => (this.#isLoggedIn = isLoggedIn as boolean))),
+      this.#identityService.watchUserRole$("Administrator").pipe(tap(isAdminLoggedIn => (this.#isAdminLoggedIn = isAdminLoggedIn as boolean))),
     ])
       .pipe(takeUntilDestroyed(), debounceTime(100))
       .subscribe(() => this.#refreshMenuItems());

@@ -3,6 +3,7 @@ using LightNap.Core.Articles.Dto.Response;
 using LightNap.Core.Articles.Interfaces;
 using LightNap.Core.Data.Entities;
 using Microsoft.EntityFrameworkCore;
+using LightNap.Core.Data;
 
 namespace LightNap.Core.Articles.Services
 {
@@ -23,88 +24,83 @@ namespace LightNap.Core.Articles.Services
         {
             var query = _context.Articles.AsQueryable();
 
-            // Apply filters
+            // Apply filters that can be translated
             if (!string.IsNullOrWhiteSpace(request.ArticleCategory))
             {
                 query = query.Where(a => a.ArticleCategory == request.ArticleCategory);
             }
+            if (!string.IsNullOrWhiteSpace(request.Material))
+            {
+                query = query.Where(a => a.Material == request.Material);
+            }
+            if (!string.IsNullOrWhiteSpace(request.SearchTerm))
+            {
+                var searchTerm = request.SearchTerm.ToLower();
+                query = query.Where(a =>
+                    a.ArticleNumber.ToLower().Contains(searchTerm) ||
+                    a.Name.ToLower().Contains(searchTerm));
+            }
 
+            // Fetch data from DB
+            var allArticles = await query.ToListAsync();
+
+            // Apply in-memory filtering for bicycle categories
             if (!string.IsNullOrWhiteSpace(request.BicycleCategory))
             {
                 var categories = request.BicycleCategory.Split(',', StringSplitOptions.RemoveEmptyEntries)
                     .Select(c => c.Trim())
                     .ToList();
-                query = query.Where(a => categories.Contains(a.BicycleCategory));
+                allArticles = allArticles.Where(a =>
+                    a.BicycleCategories != null &&
+                    a.BicycleCategories.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                        .Select(cat => cat.Trim())
+                        .Any(cat => categories.Contains(cat))
+                ).ToList();
             }
 
-            if (!string.IsNullOrWhiteSpace(request.Material))
-            {
-                query = query.Where(a => a.Material == request.Material);
-            }
-
-            if (!string.IsNullOrWhiteSpace(request.SearchTerm))
-            {
-                var searchTerm = request.SearchTerm.ToLower();
-                query = query.Where(a => 
-                    a.ArticleNumber.ToLower().Contains(searchTerm) || 
-                    a.Name.ToLower().Contains(searchTerm));
-            }
-
-            // Apply sorting
+            // Apply sorting in memory
             if (!string.IsNullOrWhiteSpace(request.SortBy))
             {
-                query = request.SortBy.ToLower() switch
+                var desc = request.SortDirection?.ToLower() == "desc";
+                allArticles = request.SortBy.ToLower() switch
                 {
-                    "articlenumber" => request.SortDirection?.ToLower() == "desc" 
-                        ? query.OrderByDescending(a => a.ArticleNumber)
-                        : query.OrderBy(a => a.ArticleNumber),
-                    "name" => request.SortDirection?.ToLower() == "desc"
-                        ? query.OrderByDescending(a => a.Name)
-                        : query.OrderBy(a => a.Name),
-                    "articlecategory" => request.SortDirection?.ToLower() == "desc"
-                        ? query.OrderByDescending(a => a.ArticleCategory)
-                        : query.OrderBy(a => a.ArticleCategory),
-                    "bicyclecategory" => request.SortDirection?.ToLower() == "desc"
-                        ? query.OrderByDescending(a => a.BicycleCategory)
-                        : query.OrderBy(a => a.BicycleCategory),
-                    "material" => request.SortDirection?.ToLower() == "desc"
-                        ? query.OrderByDescending(a => a.Material)
-                        : query.OrderBy(a => a.Material),
-                    "netweightg" => request.SortDirection?.ToLower() == "desc"
-                        ? query.OrderByDescending(a => a.NetWeightG)
-                        : query.OrderBy(a => a.NetWeightG),
-                    _ => query.OrderBy(a => a.Id)
+                    "articlenumber" => desc ? allArticles.OrderByDescending(a => a.ArticleNumber).ToList() : allArticles.OrderBy(a => a.ArticleNumber).ToList(),
+                    "name" => desc ? allArticles.OrderByDescending(a => a.Name).ToList() : allArticles.OrderBy(a => a.Name).ToList(),
+                    "articlecategory" => desc ? allArticles.OrderByDescending(a => a.ArticleCategory).ToList() : allArticles.OrderBy(a => a.ArticleCategory).ToList(),
+                    "bicyclecategory" => desc ? allArticles.OrderByDescending(a => a.BicycleCategories).ToList() : allArticles.OrderBy(a => a.BicycleCategories).ToList(),
+                    "material" => desc ? allArticles.OrderByDescending(a => a.Material).ToList() : allArticles.OrderBy(a => a.Material).ToList(),
+                    "netweightg" => desc ? allArticles.OrderByDescending(a => a.NetWeightG).ToList() : allArticles.OrderBy(a => a.NetWeightG).ToList(),
+                    _ => allArticles.OrderBy(a => a.Id).ToList()
                 };
             }
             else
             {
-                query = query.OrderBy(a => a.Id);
+                allArticles = allArticles.OrderBy(a => a.Id).ToList();
             }
 
             // Get total count
-            var totalCount = await query.CountAsync();
+            var totalCount = allArticles.Count;
 
             // Apply pagination
             var skip = (request.Page - 1) * request.PageSize;
-            var articles = await query
-                .Skip(skip)
-                .Take(request.PageSize)
-                .Select(a => new ArticleDto
-                {
-                    Id = a.Id,
-                    ArticleNumber = a.ArticleNumber,
-                    Name = a.Name,
-                    ArticleCategory = a.ArticleCategory,
-                    BicycleCategory = a.BicycleCategory,
-                    Material = a.Material,
-                    LengthMm = a.LengthMm,
-                    WidthMm = a.WidthMm,
-                    HeightMm = a.HeightMm,
-                    NetWeightG = a.NetWeightG,
-                    CreatedDate = a.CreatedDate,
-                    LastModifiedDate = a.LastModifiedDate
-                })
-                .ToListAsync();
+            var pagedArticles = allArticles.Skip(skip).Take(request.PageSize).ToList();
+
+            // Map to DTOs
+            var articles = pagedArticles.Select(a => new ArticleDto
+            {
+                Id = a.Id,
+                ArticleNumber = a.ArticleNumber,
+                Name = a.Name,
+                ArticleCategory = a.ArticleCategory,
+                BicycleCategories = a.BicycleCategories != null ? a.BicycleCategories.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(c => c.Trim()).ToList() : new List<string>(),
+                Material = a.Material,
+                LengthMm = a.LengthMm,
+                WidthMm = a.WidthMm,
+                HeightMm = a.HeightMm,
+                NetWeightG = a.NetWeightG,
+                CreatedDate = a.CreatedDate,
+                LastModifiedDate = a.LastModifiedDate
+            }).ToList();
 
             var totalPages = (int)Math.Ceiling((double)totalCount / request.PageSize);
 
@@ -131,7 +127,7 @@ namespace LightNap.Core.Articles.Services
                     ArticleNumber = a.ArticleNumber,
                     Name = a.Name,
                     ArticleCategory = a.ArticleCategory,
-                    BicycleCategory = a.BicycleCategory,
+                    BicycleCategories = a.BicycleCategories != null ? a.BicycleCategories.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(c => c.Trim()).ToList() : new List<string>(),
                     Material = a.Material,
                     LengthMm = a.LengthMm,
                     WidthMm = a.WidthMm,
@@ -153,7 +149,7 @@ namespace LightNap.Core.Articles.Services
                 ArticleNumber = request.ArticleNumber,
                 Name = request.Name,
                 ArticleCategory = request.ArticleCategory,
-                BicycleCategory = request.BicycleCategory,
+                BicycleCategories = request.BicycleCategories != null ? string.Join(",", request.BicycleCategories) : string.Empty,
                 Material = request.Material,
                 LengthMm = request.LengthMm,
                 WidthMm = request.WidthMm,
@@ -172,7 +168,7 @@ namespace LightNap.Core.Articles.Services
                 ArticleNumber = article.ArticleNumber,
                 Name = article.Name,
                 ArticleCategory = article.ArticleCategory,
-                BicycleCategory = article.BicycleCategory,
+                BicycleCategories = article.BicycleCategories != null ? article.BicycleCategories.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(c => c.Trim()).ToList() : new List<string>(),
                 Material = article.Material,
                 LengthMm = article.LengthMm,
                 WidthMm = article.WidthMm,
@@ -195,7 +191,7 @@ namespace LightNap.Core.Articles.Services
             article.ArticleNumber = request.ArticleNumber;
             article.Name = request.Name;
             article.ArticleCategory = request.ArticleCategory;
-            article.BicycleCategory = request.BicycleCategory;
+            article.BicycleCategories = request.BicycleCategories != null ? string.Join(",", request.BicycleCategories) : string.Empty;
             article.Material = request.Material;
             article.LengthMm = request.LengthMm;
             article.WidthMm = request.WidthMm;
@@ -211,7 +207,7 @@ namespace LightNap.Core.Articles.Services
                 ArticleNumber = article.ArticleNumber,
                 Name = article.Name,
                 ArticleCategory = article.ArticleCategory,
-                BicycleCategory = article.BicycleCategory,
+                BicycleCategories = article.BicycleCategories != null ? article.BicycleCategories.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(c => c.Trim()).ToList() : new List<string>(),
                 Material = article.Material,
                 LengthMm = article.LengthMm,
                 WidthMm = article.WidthMm,
@@ -249,11 +245,13 @@ namespace LightNap.Core.Articles.Services
         /// <inheritdoc/>
         public async Task<List<string>> GetBicycleCategoriesAsync()
         {
-            return await _context.Articles
-                .Select(a => a.BicycleCategory)
+            var allArticles = await _context.Articles.ToListAsync();
+            return allArticles
+                .SelectMany(a => a.BicycleCategories != null ? a.BicycleCategories.Split(',', StringSplitOptions.RemoveEmptyEntries) : new string[0])
+                .Select(c => c.Trim())
                 .Distinct()
                 .OrderBy(c => c)
-                .ToListAsync();
+                .ToList();
         }
 
         /// <inheritdoc/>
